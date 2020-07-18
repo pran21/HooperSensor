@@ -15,6 +15,11 @@ def find_marker(image):
 	# we'll assume that this is our piece of paper in the image
 	cnts = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 	cnts = imutils.grab_contours(cnts)
+
+    # ***current set up just sees which contours on the screen has the biggest
+    # ***area, but we need to use something like color or another property
+    # ***to accuratly detect the basketball.
+    
 	c = max(cnts, key = cv2.contourArea)
 	# compute the bounding box of the of the paper region and return it
 	return cv2.minAreaRect(c)
@@ -22,6 +27,10 @@ def find_marker(image):
 def distance_to_camera(knownWidth, focalLength, perWidth):
 	# compute and return the distance from the maker to the camera
 	return (knownWidth * focalLength) / perWidth
+
+
+# ***this is for calibration/ we need to change this 
+# ***to make the calibration process better
 
 # initialize the known distance from the camera to the object, which
 # in this case is 24 inches
@@ -37,6 +46,10 @@ KNOWN_WIDTH = 11.0
 image = cv2.imread("images/2ft.png")
 marker = find_marker(image)
 focalLength = (marker[1][0] * KNOWN_DISTANCE) / KNOWN_WIDTH
+
+
+# ***the actual distance test; works for images, so we need to change for 
+# ***live video input
 
 # loop over the images
 for imagePath in sorted(paths.list_images("images")):
