@@ -119,7 +119,7 @@ PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,GRAPH_NAME)
 PATH_TO_LABELS = os.path.join(CWD_PATH,MODEL_NAME,LABELMAP_NAME)
 
 # Load the label map
-with open('/home/pi/tflite1/Sample_TFlite_model/labelmap.txt', 'r') as f:
+with open('TFLite_model_2/labelmap.txt', 'r') as f:
     labels = [line.strip() for line in f.readlines()]
 
 # Have to do a weird fix for label map if using the COCO "starter model" from
@@ -131,11 +131,11 @@ if labels[0] == '???':
 # Load the Tensorflow Lite model.
 # If using Edge TPU, use special load_delegate argument
 if use_TPU:
-    interpreter = Interpreter(model_path='/home/pi/tflite1/Sample_TFlite_model/detect.tflite',
+    interpreter = Interpreter(model_path='TFLite_model_2/detect.tflite',
                               experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
     print(PATH_TO_CKPT)
 else:
-    interpreter = Interpreter(model_path='/home/pi/tflite1/Sample_TFlite_model/detect.tflite')
+    interpreter = Interpreter(model_path='TFLite_model_2/detect.tflite')
 
 interpreter.allocate_tensors()
 
@@ -203,8 +203,8 @@ while True:
             
             cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
             
-            if ((int(classes[i])) == 64):
-                # Define inside bed coordinates (top left and bottom right)
+            if ((int(classes[i])) == 1):
+                # Define inside basketball coordinates (top left and bottom right)
                 TLy = int(max(1,(boxes[i][0] * imH)))
                 TLx = int(max(1,(boxes[i][1] * imW)))
                 BRy = int(min(imH,(boxes[i][2] * imH)))
