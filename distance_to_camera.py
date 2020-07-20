@@ -5,6 +5,7 @@ from imutils import paths
 import numpy as np
 import imutils
 import cv2
+import time
 from threading import Thread
 
 
@@ -110,19 +111,41 @@ def distance_to_camera(knownWidth, focalLength, perWidth):
 # 	cv2.imshow("image", image)
 # 	cv2.waitKey(0)
 
+orangeLower = (112, 65, 19)
+orangeUpper = (255, 255, 88)
+
 videostream = VideoStream(framerate=30).start()
+time.sleep(1)
 
 while True:
-
 
 	# Grab frame from video stream
     frame = videostream.read()
 
-    marker = find_marker(frame)
+    blurred = cv2.GaussianBlur(frame, (11,11), 0)
+    hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV)
 
-    box = cv2.cv.BoxPoints(marker) if imutils.is_cv2() else cv2.boxPoints(marker)
-    box = np.int0(box)
-    cv2.drawContours(frame, [box], -1, (0, 255, 0), 2)
+    mask = cv2.inRange(hsv, orangeLower, orangeUpper)
+    mask = cv2.erode(mask, None, iterations=2)
+    mask = cv2.dilate(mask, None, iterations=2)
+
+    cnts = cv2.findContours(mask.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    center = None
+    
+    if len(cnts) > 0:
+        c = max(cnts, key=cv2.contourArea)
+        ((x,y), radius) = cv2.minEnclosingCircle(c)
+        M = cv2.moments(c)
+        center = (int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"]))
+
+        if radius > 10:
+
+	        cv2.circle(frame, (int(x), int(y)), int(radius), (0,255,255), 2)
+	        cv2.circle(frame, center, 5, (0,255,255),-1)
+
+
+
 
 	# All the results have been drawn on the frame, so it's time to display it.
     cv2.imshow('Object detector', frame)
