@@ -204,7 +204,7 @@ while True:
             cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
             
             if ((int(classes[i])) == 1):
-                # Define inside bed coordinates (top left and bottom right)
+                # Define inside basketball coordinates (top left and bottom right)
                 TLy = int(max(1,(boxes[i][0] * imH)))
                 TLx = int(max(1,(boxes[i][1] * imW)))
                 BRy = int(min(imH,(boxes[i][2] * imH)))
