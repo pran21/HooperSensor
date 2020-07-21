@@ -2,7 +2,7 @@
 #
 # Author: Evan Juras
 # Date: 10/27/19
-# Description: 
+# Description:
 # This program uses a TensorFlow Lite model to perform object detection on a live webcam
 # feed. It draws boxes and scores around the objects of interest in each frame from the
 # webcam. To improve FPS, the webcam object runs in a separate thread from the main program.
@@ -33,7 +33,7 @@ class VideoStream:
         ret = self.stream.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         ret = self.stream.set(3,resolution[0])
         ret = self.stream.set(4,resolution[1])
-            
+
         # Read first frame from the stream
         (self.grabbed, self.frame) = self.stream.read()
 
@@ -81,7 +81,6 @@ parser.add_argument('--edgetpu', help='Use Coral Edge TPU Accelerator to speed u
                     action='store_true')
 
 args = parser.parse_args()
-
 MODEL_NAME = args.modeldir
 GRAPH_NAME = args.graph
 LABELMAP_NAME = args.labels
@@ -107,7 +106,7 @@ else:
 if use_TPU:
     # If user has specified the name of the .tflite file, use that name, otherwise use default 'edgetpu.tflite'
     if (GRAPH_NAME == 'detect.tflite'):
-        GRAPH_NAME = 'edgetpu.tflite'       
+        GRAPH_NAME = 'edgetpu.tflite'
 
 # Get path to current working directory
 CWD_PATH = os.getcwd()
@@ -119,23 +118,17 @@ PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,GRAPH_NAME)
 PATH_TO_LABELS = os.path.join(CWD_PATH,MODEL_NAME,LABELMAP_NAME)
 
 # Load the label map
-with open('TFLite_model_2/labelmap.txt', 'r') as f:
+with open(PATH_TO_LABELS, 'r') as f:
     labels = [line.strip() for line in f.readlines()]
-
-# Have to do a weird fix for label map if using the COCO "starter model" from
-# https://www.tensorflow.org/lite/models/object_detection/overview
-# First label is '???', which has to be removed.
-if labels[0] == '???':
-    del(labels[0])
 
 # Load the Tensorflow Lite model.
 # If using Edge TPU, use special load_delegate argument
 if use_TPU:
-    interpreter = Interpreter(model_path='TFLite_model_2/detect.tflite',
+    interpreter = Interpreter(model_path=PATH_TO_CKPT,
                               experimental_delegates=[load_delegate('libedgetpu.so.1.0')])
     print(PATH_TO_CKPT)
 else:
-    interpreter = Interpreter(model_path='TFLite_model_2/detect.tflite')
+    interpreter = Interpreter(model_path=PATH_TO_CKPT)
 
 interpreter.allocate_tensors()
 
@@ -200,18 +193,19 @@ while True:
             xmin = int(max(1,(boxes[i][1] * imW)))
             ymax = int(min(imH,(boxes[i][2] * imH)))
             xmax = int(min(imW,(boxes[i][3] * imW)))
-            
+
             cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
-            
+
             if ((int(classes[i])) == 1):
                 # Define inside basketball coordinates (top left and bottom right)
+                print('class 1 is basketball')
                 TLy = int(max(1,(boxes[i][0] * imH)))
                 TLx = int(max(1,(boxes[i][1] * imW)))
                 BRy = int(min(imH,(boxes[i][2] * imH)))
                 BRx = int(min(imW,(boxes[i][3] * imW)))
                 TL_inside = (TLx,TLy)
                 BR_inside = (BRx,BRy)
-                
+
             if ((int(classes[i])) == 0):
                 x = int(((boxes[i][1]+boxes[i][3])/2)*imW)
                 y = int(((boxes[i][0]+boxes[i][2])/2)*imH)
@@ -219,7 +213,7 @@ while True:
                 cv2.circle(frame,(x,y), 5, (75,13,180), -1)
                 if ((x > TL_inside[0]) and (x < BR_inside[0]) and (y > TL_inside[1]) and (y < BR_inside[1])):
                     cv2.circle(frame,(x,y), 50, (75,13,180), -1)
-            
+
             # Draw label
             object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
             label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
@@ -246,4 +240,3 @@ while True:
 # Clean up
 cv2.destroyAllWindows()
 videostream.stop()
-
