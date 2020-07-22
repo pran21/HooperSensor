@@ -1,4 +1,5 @@
 import math
+import cv2
 
 class Detection:
 
@@ -8,7 +9,7 @@ class Detection:
         self.y2 = int(min(imageHeight, box[2]*imageHeight))
         self.x2 = int(min(imageWidth, box[3]*imageWidth))
 
-        self.classNum = type
+        self.classNum = int(type)
         self.score = score
 
     def getClassName(self, labels):
@@ -26,12 +27,12 @@ class Detection:
         sq2 = (y1 - y2) * (y1 - y2)
         return math.sqrt(sq1 + sq2)
 
-    def draw(self, frame):
+    def draw(self, frame, labels):
         cv2.rectangle(frame, (self.x1, self.y1), (self.x2, self.y2), (0, 255, 0), 2)
-        self.drawLabel(frame)
+        self.drawLabel(frame, labels)
 
-    def drawLabel(self, frame):
-        label = '%s: %d%%' % (self.getClassName, int(self.score * 100)) # Example: 'person: 72%'
+    def drawLabel(self, frame, labels):
+        label = '%s: %d%%' % (self.getClassName(labels), int(self.score * 100)) # Example: 'person: 72%'
         labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
         label_ymin = max(self.y1, labelSize[1] + 10) # Make sure not to draw label too close to top of window
         cv2.rectangle(frame, (self.x1, label_ymin-labelSize[1]-10), (self.x1+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in

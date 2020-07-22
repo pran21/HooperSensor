@@ -22,7 +22,7 @@ import sys
 import time
 from threading import Thread
 import importlib.util
-import Detection
+from Detection import Detection
 
 # Define VideoStream class to handle streaming of video from webcam in separate processing thread
 # Source - Adrian Rosebrock, PyImageSearch: https://www.pyimagesearch.com/2015/12/28/increasing-raspberry-pi-fps-with-python-and-opencv/
@@ -189,42 +189,26 @@ while True:
         if ((scores[i] > min_conf_threshold) and (scores[i] <= 1.0)):
 
             detect = Detection(boxes[i], classes[i], scores[i], imH, imW)
-            detect.draw(frame)
+            detect.draw(frame, labels)
             detections.append(detect)
 
-            # # Get bounding box coordinates and draw box
-            # # Interpreter can return coordinates that are outside of image dimensions, need to force them to be within image using max() and min()
-            # ymin = int(max(1,(boxes[i][0] * imH)))
-            # xmin = int(max(1,(boxes[i][1] * imW)))
-            # ymax = int(min(imH,(boxes[i][2] * imH)))
-            # xmax = int(min(imW,(boxes[i][3] * imW)))
-            #
-            # cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
-            #
-            # if ((int(classes[i])) == 1):
-            #     # Define inside basketball coordinates (top left and bottom right)
-            #     TLy = int(max(1,(boxes[i][0] * imH)))
-            #     TLx = int(max(1,(boxes[i][1] * imW)))
-            #     BRy = int(min(imH,(boxes[i][2] * imH)))
-            #     BRx = int(min(imW,(boxes[i][3] * imW)))
-            #     TL_inside = (TLx,TLy)
-            #     BR_inside = (BRx,BRy)
-            #
-            # if ((int(classes[i])) == 0):
-            #     x = int(((boxes[i][1]+boxes[i][3])/2)*imW)
-            #     y = int(((boxes[i][0]+boxes[i][2])/2)*imH)
-            #     # Draw a circle at center of object
-            #     cv2.circle(frame,(x,y), 5, (75,13,180), -1)
-            #     if ((x > TL_inside[0]) and (x < BR_inside[0]) and (y > TL_inside[1]) and (y < BR_inside[1])):
-            #         cv2.circle(frame,(x,y), 50, (75,13,180), -1)
-            #
-            # # Draw label
-            # object_name = labels[int(classes[i])] # Look up object name from "labels" array using class index
-            # label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
-            # labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
-            # label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
-            # cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
-            # cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
+            def isBasketball(detection):
+                return detection.classNum == 0
+
+            def isPerson(detection):
+                return detection.classNum == 1
+
+            # Test if there is a ball and atleast one person
+            basketball = list(filter(isBasketball, detections))
+            persons = list(filter(isPerson, detections))
+            if (len(basketball) == 1) and (len(persons) > 0):
+                #Test distance between ball and person
+                distance = basketball[0].getDistance(persons[0])
+                threshold = 200
+                print("Distance ", distance)
+                if (distance < threshold):
+                    print("Person has the ball.")
+
 
     # Draw framerate in corner of frame
     cv2.putText(frame,'FPS: {0:.2f}'.format(frame_rate_calc),(30,50),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,0),2,cv2.LINE_AA)
